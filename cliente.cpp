@@ -21,62 +21,28 @@
 #include <queue> 
 
 #include "Packet.h"
+#include "Coneccion.h"
 
 using namespace std;
-
-int sockfd;
-bool conectado = false;
-struct  sockaddr_in direc;
-
-
-
-
-void conectar(string ipServidor, int puerto){
-    if((sockfd = socket(AF_INET, SOCK_STREAM, 0)) < 0) {
-        cout << "error al crear el socket"<<endl; 
-        return;    
-    }
-
-    direc.sin_family = AF_INET;
-    direc.sin_port = htons(puerto);
-    inet_pton(AF_INET, ipServidor.c_str(), &direc.sin_addr);
-
-    if (connect(sockfd,(struct sockaddr *)&direc, sizeof(direc)) == -1 ){
-        cout << "conexion al servidor fallo" << endl;
-        return;
-    }
-    conectado = true;
-
-    cout << "coneccion exitosa" << endl;   
-};
-
-
-
-
-void desconectar(){
-    if (!conectado)
-        return;
-    conectado = false;
-
-    shutdown(sockfd, SHUT_RDWR);
-    close(sockfd);
-    cout << "Ya esta desconectado;"<< endl;
-};
 
 
 
 
 int main(int argc, char **argv) {   
-    if ( argc < 3 ){
+    if ( argc < 2 ){
         cout<<"falta argumentos"<<endl;
         return -1;
     }
-    string opcion = argv[1];    
+    string opcion = argv[1];
+    
+    Cliente cliente("127.0.0.1", 8000);
 
     if (opcion == "-q"){
-        conectar("127.0.0.1",8000);
-
-        desconectar();
+        if ( !cliente.conectar() )
+            return -1;
+        if (cliente.enviarMensaje("hola mundo"))
+            cout << "mensaje enviado exitosamente" << endl;
+        cout << cliente.recibirMensaje()<<endl;
     }
    
     return 0;

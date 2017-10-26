@@ -19,95 +19,43 @@
 #include <mutex> 
 
 #include "Packet.h"
+#include "Coneccion.h"
 
 using namespace std;
-
-
-
- 
-int sockfd;
-struct sockaddr_in serv_addr;
-bool conectado = false;
+Servidor *servidor;
+bool conectado;
 mutex mtxScreen;
-vector<int> clientesFds;
-
-
-
-
-void conectar(int puerto){     
-    if( (sockfd = socket(AF_INET, SOCK_STREAM, 0)) == -1){
-       cout << "error al crear el socket" << endl;
-       return;
-    }
-    
-    serv_addr.sin_family = AF_INET;
-    serv_addr.sin_port = htons(puerto);
-    serv_addr.sin_addr.s_addr = htons(INADDR_ANY);
-    memset(&(serv_addr.sin_zero), 0, 8);
- 
-    if ( bind(sockfd, (struct sockaddr *)&serv_addr, sizeof(struct sockaddr)) == -1)  
-        cout << "error al asignar puerto" << endl;
- 
-    if ( listen(sockfd, 10) == -1)        
-        cout << "error en liste" << endl;    
-
-    conectado = true;
-};
-
-
-
-
-void desconectar(){
-    if (!conectado)
-        return;
-    conectado = false;
-
-    shutdown(sockfd, SHUT_RDWR);
-    close(sockfd);
-
-    mtxScreen.lock();
-    for (int i=0; i<clientesFds.size(); ++i){
-        shutdown(clientesFds[i], SHUT_RDWR);
-        close(clientesFds[i]);
-    }
-    mtxScreen.unlock();
-
-    cout << "Ya esta desconectado;" << endl;
-};
 
 
 
 
 void cerrarCliente(int fd){
-    mtxScreen.lock();
-    for (int i=0; i<clientesFds.size(); ++i){
-        if (fd == clientesFds[i]){            
-            clientesFds.erase (clientesFds.begin()+i);
-            break;
-        }
-    }
-    mtxScreen.unlock();
-
-    shutdown(fd, SHUT_RDWR);
+	shutdown(fd, SHUT_RDWR);
     close(fd);
-
-    cout << "cliente cerrado" << endl;
+    cout << "thread cliente cerrado" << endl;
 }
 
 
 
 
-void cliente(int fd){ //envio y recepcion de mensajes    
+void cliente(int fd){ //thread envio y recepcion de mensajes    
     char clienteBuffer[2048];
     cout << "cliente aceptado" << endl;
 
     while(conectado){
-        int tam = recv(fd, clienteBuffer, COMMANDSIZE, 0)  ;    
-        if ( tam <= 0 ){
-            cerrarCliente(fd);
+        int tam = recv(fd, clienteBuffer, 100, 0)  ;    
+        if ( tam <= 0 ){ 
+        	cerrarCliente(fd);           
             return;
         }
-        cout << tam << endl;
+        cout << "mensaje recibido: "<< clienteBuffer <<endl;
+
+        Cliente clienteTemp("127.0.0.1", 8001);
+        if (!clienteTemp.conectar())
+        	cout<< "esclavo no encontrado;" << endl;
+        clienteTemp.enviarMensaje("holaaaaa");
+
+        send(fd, clienteBuffer, 100, 0);
         bzero(clienteBuffer,2048);
     }
 }
@@ -115,39 +63,38 @@ void cliente(int fd){ //envio y recepcion de mensajes
 
 
 
-void aceptarClientes (){
-    socklen_t sin_size = sizeof(serv_addr);
-
+void aceptarClientes (){ //thread que recepciona a los clientes 
+	cout << "aceptaClientes thread iniciadad" << endl;   
     while (conectado){
-        int newfd = accept(sockfd, (struct sockaddr *)&serv_addr, &sin_size);
-        if (newfd == -1){
+        int newfd = servidor->aceptarConeccion();
+        if (newfd == -1)        	
             continue;
-        }
-
-        mtxScreen.lock();
-            clientesFds.push_back(newfd);
-        mtxScreen.unlock();
-
         thread (cliente, newfd).detach();
     }
+    cout << "cerrando thread aceptarClientes()" << endl;
 }
 
 
 
 
-int main(int argc, char **argv) {
-    
+int main(int argc, char **argv) {    
     char buffer[50];
 
-    conectar(8000); //puerto
+    // 0 es el maestro, ver listas en Coneccion.h
+    servidor = new Servidor(0); 
+    if (!servidor->iniciar())
+    	return -1;    
+    conectado = true;
 
     thread (aceptarClientes).detach();
+
     //interfaz de consola   
+    //"quit para cerrar la aplicacion"
     while( conectado ) {
         cin.getline(buffer,50);
         string line = buffer;
-        string option = getWord(&line);
-        if (option == "quit"){            
+        string option = getWord(&line); //getRowd en Packet.h
+        if (option == "quit"){  
             conectado = false;            
             break;
         }       
@@ -159,6 +106,7 @@ int main(int argc, char **argv) {
         bzero(buffer,50);
     }
     
-    desconectar();
+    delete servidor;
+    sleep(1);
     return 0;
 } 
