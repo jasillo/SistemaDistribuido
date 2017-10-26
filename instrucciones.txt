@@ -1,0 +1,3 @@
+g++ -std=c++11 cliente.cpp -o c -pthread
+g++ -std=c++11 servidorMaestro.cpp -o m -pthread
+
