@@ -46,40 +46,47 @@ string getString(string *s){
 
 // construir strings de tamaño fijo con ints
 std::string fixedLength(int value, int digits = 3) {
-    unsigned int uvalue = value;
-    if (value < 0) {
-        uvalue = -uvalue;
+    std::string result = std::to_string(value);
+    int temp = digits - result.size();
+    while (temp-- > 0) {
+        result = '0' + result;
     }
-    std::string result;
-    while (digits-- > 0) {
-        result += ('0' + uvalue % 10);
-        uvalue /= 10;
-    }
-    if (value < 0) {
-        result += '-';
-    }
-    reverse(result.begin(), result.end());
     return result;
 }
 
 
 
 
-struct PACKET { 
-    string opt; //opcion del comando: send, login, logout
-    string message;
+struct Packet { 
+    string opcion = ""; //opcion del comando: send, login, logout
+    vector<string> datos;
     
-    PACKET(){};
+    Packet(){};
+    
+    string generarPaquete(){
+    	string paquete = "";
 
-    void analizeHeader(string command){    	
-    	opt = command.substr(USERNAMESIZE, COMMANDSIZE);
-    };
-    
-    string generate(){
-    	string r = "";
-	    
-        return r;
+        if ( opcion == "n" ){
+            paquete = opcion + fixedLength(datos[0].size(),3) + datos[0];
+        }
+        else if ( opcion == "l" ){
+
+        }
+	    else if ( opcion == "q" ){
+
+        }
+        else if ( opcion == "p" ){
+
+        }
+        else if ( opcion == "c" ){
+
+        }
+        else if ( opcion == "s" ){
+
+        }
+
+        return paquete;
     };    
 };
 
-#endif /* _PACKET_H_ */
+#endif 

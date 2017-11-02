@@ -25,17 +25,19 @@
 
 #include "Packet.h"
 
+
 using namespace std;
 
 
+static vector<string> listaDeIps = {   "127.0.0.1","127.0.0.1","127.0.0.1","127.0.0.1","127.0.0.1",
+                                "127.0.0.1","127.0.0.1","127.0.0.1","127.0.0.1" };
+static vector<int> listaDePuertos = {8000,8001,8002,8003,8004,8005,8006,8007,8008};
 
 
 class Cliente
 {
 private:
-    vector<string> listaDeIps = {   "127.0.0.1","127.0.0.1","127.0.0.1","127.0.0.1","127.0.0.1",
-                                "127.0.0.1","127.0.0.1","127.0.0.1","127.0.0.1" };
-    vector<int> listaDePuertos = {8000,8001,8002,8003,8004,8005,8006,8007,8008};
+    
 public:
     int socketServidor;
     string ipDestino;
@@ -43,13 +45,14 @@ public:
     struct  sockaddr_in direc;
     bool conectado;
 
-    Cliente(string ip, int port){
-        ipDestino = ip;
-        puertoDestino = port;
+    Cliente(){        
         conectado = false;        
     };
 
-    bool conectar(){
+    bool conectar(int indice){
+        ipDestino = listaDeIps[indice];
+        puertoDestino = listaDePuertos[indice];
+
         if((socketServidor = socket(AF_INET, SOCK_STREAM, 0)) < 0) {
             cout << "error al crear el socket"<<endl; 
             return false;    
@@ -79,9 +82,8 @@ public:
         cout << "cliente se desconecto;"<< endl;
     };
 
-    bool enviarMensaje(string msm){
-        //dar protocolo al mensaje
-        int tam = send(socketServidor, msm.c_str(), 100, 0);
+    bool enviarMensaje(string mensaje){
+        int tam = send(socketServidor, mensaje.c_str(), mensaje.size(), 0);
         if (tam < 1){
             cout << "error al enviar mensaje" << endl;
             return false;
@@ -89,9 +91,13 @@ public:
         return true;
     };
 
-    string recibirMensaje(){
-        char buffer[1024];
-        recv(socketServidor, buffer, 100, 0);
+    string recibirMensaje(int tamanio){
+        char buffer[tamanio];
+        int tam = recv(socketServidor, buffer, tamanio, 0);
+        if (tam < 1){
+            cout << "error al recibir mensaje" << endl;
+            return "";
+        }
         string msm = buffer;
         return buffer;
     };
@@ -105,9 +111,7 @@ public:
 class Servidor
 {
 private:
-    vector<string> listaDeIps = {   "127.0.0.1","127.0.0.1","127.0.0.1","127.0.0.1","127.0.0.1",
-                                "127.0.0.1","127.0.0.1","127.0.0.1","127.0.0.1" };
-    vector<int> listaDePuertos = {8000,8001,8002,8003,8004,8005,8006,8007,8008};
+    
 public:    
     int sockfd;
     int puerto;
@@ -148,6 +152,27 @@ public:
     int aceptarConeccion(){
         socklen_t sin_size = sizeof(direc);
         return accept(sockfd, (struct sockaddr *)&direc, &sin_size);
+    }
+
+    static bool enviarMensaje(string mensaje, int fdCliente){
+        int tam = send(fdCliente, mensaje.c_str(), mensaje.size(), 0);
+        if (tam < 1){
+            cout << "error al enviar mensaje" << endl;
+            return false;
+        }
+        return true;  
+    }
+
+    static string recibirMensaje(int tamanio, int fdCliente){
+        char buffer[tamanio +1];
+        bzero(buffer,tamanio+1);
+        int tam = recv(fdCliente, buffer, tamanio, 0) ;        
+        if (tam < 1){
+            cout << "error al recibir mensaje" << endl;
+            return "";
+        }
+        string mensaje = buffer;
+        return mensaje;
     }
 
     ~Servidor(){

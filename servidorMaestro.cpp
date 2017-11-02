@@ -38,26 +38,43 @@ void cerrarCliente(int fd){
 
 
 
-void cliente(int fd){ //thread envio y recepcion de mensajes    
+void cliente(int fd){ //thread envio y recepcion de mensajes
+	char opcionBuffer[2];   
     char clienteBuffer[2048];
     cout << "cliente aceptado" << endl;
+    Packet paquetador;
 
-    while(conectado){
-        int tam = recv(fd, clienteBuffer, 100, 0)  ;    
-        if ( tam <= 0 ){ 
-        	cerrarCliente(fd);           
-            return;
+    while(conectado){       
+        if ( ( paquetador.opcion = Servidor::recibirMensaje(1, fd) ) == "")        	           
+            break;
+        cout << paquetador.opcion <<endl;
+        int tam;
+        if ( paquetador.opcion == "n" ){
+        	tam = stoi( Servidor::recibirMensaje(3, fd) );
+        	cout << tam <<endl;
+        	paquetador.datos.push_back(Servidor::recibirMensaje(tam, fd));
+        	cout<<paquetador.datos[0]<<endl;
         }
-        cout << "mensaje recibido: "<< clienteBuffer <<endl;
+        else if ( paquetador.opcion == "l" ){
 
-        Cliente clienteTemp("127.0.0.1", 8001);
-        if (!clienteTemp.conectar())
-        	cout<< "esclavo no encontrado;" << endl;
-        clienteTemp.enviarMensaje("holaaaaa");
+        }
+	    else if ( paquetador.opcion == "q" ){
 
-        send(fd, clienteBuffer, 100, 0);
+        }
+        else if ( paquetador.opcion == "p" ){
+
+        }
+        else if ( paquetador.opcion == "c" ){
+
+        }
+        else if ( paquetador.opcion == "s" ){
+
+        }        
+
+
         bzero(clienteBuffer,2048);
     }
+    cerrarCliente(fd);
 }
 
 
