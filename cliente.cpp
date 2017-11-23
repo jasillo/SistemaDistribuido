@@ -26,8 +26,6 @@
 using namespace std;
 
 
-
-
 int main(int argc, char **argv) {   
     if ( argc < 2 ){
         cout<<"falta argumentos"<<endl;
@@ -35,19 +33,26 @@ int main(int argc, char **argv) {
     }
 
     struct Packet paquetador;
-    string opcion = argv[1];
-    
+    string opcion = argv[1];    
     Cliente cliente;
+    string cadena;
+
     if ( !cliente.conectar(0) ) // posicion 0 es la del servidor maestro
         return -1;
 
     if (opcion == "-N"){
-        paquetador.opcion =  "n";
-        paquetador.datos.push_back(argv[2]);
-        cliente.enviarMensaje( paquetador.generarPaquete() ); 
+        paquetador.opcion = "n";
+        paquetador.nodo1 = argv[2];        
+        cliente.enviarMensaje(paquetador.generarPaquete());
+        cadena = cliente.recivirMensaje(5);
+        paquetador.leerCabezera(cadena); //cabezera
+        cadena = cliente.recivirMensaje(paquetador.tamanio)
+        paquetador.leerCuerpo(cadena);
     }
     else if (opcion == "-L"){
         paquetador.opcion =  "l";
+        paquetador.nodo1 = argv[2];
+        paquetador.nodo2 = argv[3];
 
     }
     else if (opcion == "-Q"){
