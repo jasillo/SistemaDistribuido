@@ -42,34 +42,47 @@ int main(int argc, char **argv) {
 
     if (opcion == "-N"){
         paquetador.opcion = "n";
-        paquetador.nodo1 = argv[2];        
-        cliente.enviarMensaje(paquetador.generarPaquete());
-        cadena = cliente.recivirMensaje(5);
-        paquetador.leerCabezera(cadena); //cabezera
-        cadena = cliente.recivirMensaje(paquetador.tamanio)
-        paquetador.leerCuerpo(cadena);
+        paquetador.nodos.push_back(argv[2]);        
+        cliente.enviarMensaje(paquetador.generarPaquete());        
+
+        paquetador.leerCabezera(cliente.recivirMensaje(5)); //cabezera
+        paquetador.leerCuerpo(cliente.recivirMensaje(paquetador.tamanio));
     }
     else if (opcion == "-L"){
         paquetador.opcion =  "l";
-        paquetador.nodo1 = argv[2];
-        paquetador.nodo2 = argv[3];
+        paquetador.nodos.push_back(argv[2]);
+        paquetador.nodos.push_back(argv[3]);
+        cliente.enviarMensaje(paquetador.generarPaquete());
 
+        paquetador.leerCabezera(cliente.recivirMensaje(5)); //cabezera
+        paquetador.leerCuerpo(cliente.recivirMensaje(paquetador.tamanio));
     }
     else if (opcion == "-Q"){
         paquetador.opcion =  "q";
+        paquetador.nodos.push_back(argv[2]);
+        paquetador.profundidad = argv[3];
+        cliente.enviarMensaje(paquetador.generarPaquete());
 
+        paquetador.leerCabezera(cliente.recivirMensaje(5)); //cabezera
+        paquetador.leerCuerpo(cliente.recivirMensaje(paquetador.tamanio));
     }
     else if (opcion == "-P"){
         paquetador.opcion =  "p";
+        for (int i = 2; i < argc; ++i)
+            paquetador.push_back(argv[i]);
+        cliente.enviarMensaje(paquetador.generarPaquete());
 
+        do{
+            paquetador.leerCabezera(cliente.recivirMensaje(5)); //cabezera
+            paquetador.leerCuerpo(cliente.recivirMensaje(paquetador.tamanio)); //imprime en pantalla
+        }while (paquetador.tamanio != 0)
     }
     else if (opcion == "-C"){
         paquetador.opcion =  "c|"; 
 
     }
     else if (opcion == "-S"){
-        paquetador.opcion =  "s";
-
+        
     }
 
    

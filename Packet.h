@@ -17,16 +17,16 @@ using namespace std;
 /********************************
 * funciones de manejo de strings
 *********************************/
-// leer un palabra de un string, luego borra esa palabra
+// devuelve la primera palabra de una cadena y la borra
 string getWord(string *s){
     int pos;
-    //eliminar espacios en blanco al inicio
-    for (pos=0; pos < s->size() && s->at(pos) == ' '; ++pos){};
+    //eliminar espacios en blanco al inicio, trim
+    for (pos = 0; pos < s->size() && s->at(pos) == ' '; ++pos){};
     *s = s->substr(pos);
     if (s->empty())
         return "";
     //obtencion de la primera palabra
-    for (pos=0; pos < s->size() && s->at(pos) != ' '; ++pos){};
+    for (pos = 0; pos < s->size() && s->at(pos) != ' '; ++pos){};
     string word = s->substr(0,pos);
     *s = s->substr(pos);
     return word;
@@ -59,7 +59,9 @@ std::string fixedLength(int value, int digits = 3) {
 
 struct Packet { 
     string opcion = ""; //opcion del comando: send, login, logout
-    vector<string> datos;
+    vector<string> nodos;
+    int profundidad = 0;
+    int tamanio = 0;
     
     Packet(){};
     
@@ -67,7 +69,7 @@ struct Packet {
     	string paquete = "";
 
         if ( opcion == "n" ){
-            paquete = opcion + fixedLength(datos[0].size(),3) + datos[0];
+            
         }
         else if ( opcion == "l" ){
 
@@ -86,7 +88,20 @@ struct Packet {
         }
 
         return paquete;
-    };    
+    };
+
+    void leerCabezera(string s){
+        opcion = s.substr(0,1);
+        tamanio = stoi(s.substr(1,4));
+    }
+
+    void leerCuerpo(string s){
+
+    }
+
+    void clear(){
+
+    }   
 };
 
 #endif 

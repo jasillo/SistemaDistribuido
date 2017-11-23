@@ -47,13 +47,13 @@ void cliente(int fd){ //thread envio y recepcion de mensajes
     while(conectado){       
         if ( ( paquetador.opcion = Servidor::recibirMensaje(1, fd) ) == "")        	           
             break;
-        cout << paquetador.opcion <<endl;
+        //cout << paquetador.opcion <<endl;
         int tam;
         if ( paquetador.opcion == "n" ){
         	tam = stoi( Servidor::recibirMensaje(3, fd) );
-        	cout << tam <<endl;
+        	//las palabras estan separadas por espacios
         	paquetador.datos.push_back(Servidor::recibirMensaje(tam, fd));
-        	cout<<paquetador.datos[0]<<endl;
+                    	
         }
         else if ( paquetador.opcion == "l" ){
 
