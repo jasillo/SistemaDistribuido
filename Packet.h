@@ -6,13 +6,80 @@
 #include <string>
 #include <iostream>
 #include <algorithm>
-
+#include <vector>
+#include <curl/curl.h>
+#include <jsoncpp/json/json.h>
+#include <unistd.h>
 
 #define USERNAMESIZE 2
 #define COMMANDSIZE 1
 
 using namespace std;
 
+string data; //will hold the url's contents
+
+size_t writeCallback(char* buf, size_t size, size_t nmemb, void* up)
+{
+    size_t realsize = size * nmemb;
+    data.append(buf, realsize);
+    return realsize;
+}
+
+vector<string> buscar (string palabra)
+{
+    CURL* curl; //our curl object
+
+    curl_global_init(CURL_GLOBAL_ALL); //pretty obvious
+    curl = curl_easy_init();
+
+//nodo 1 se pasa por parametro y lo sumo al string http.....
+
+    string url = "";
+    url = "http://localhost:8983/solr/mycol1/select?fl=nodo2&indent=on&q=nodo1:"+palabra+"&wt=json&rows=1000";
+
+//    curl_easy_setopt(curl, CURLOPT_URL, "http://localhost:8983/solr/mycol1/select?fl=nodo2&indent=on&q=nodo1:barbell&wt=json&rows=1000");
+
+    curl_easy_setopt(curl, CURLOPT_URL, url.c_str());
+    curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, &writeCallback);
+    //curl_easy_setopt(curl, CURLOPT_VERBOSE, 1L); //tell curl to output its progress
+
+    curl_easy_perform(curl);
+
+    //cout << endl << data << endl;
+
+    curl_easy_cleanup(curl);
+    curl_global_cleanup();
+
+    /*____________________________________*/
+
+
+    Json::Reader reader;
+    Json::Value obj;
+    reader.parse(data, obj);     // Reader can also read strings
+    const Json::Value& objeto = obj["response"];
+    int tam = objeto["numFound"].asUInt();
+    cout <<"numero coincidencias : "<< tam << endl;
+    cout <<"valores : "<<endl;
+    const Json::Value& valores = objeto["docs"];
+
+    vector<string> columna2;
+
+
+//creo vector de string igualando a valores
+    for (int i=0; i<tam; ++i){
+        //cout<<valores[i]["nodo2"][0].asString()<<endl;
+	columna2.push_back(valores[i]["nodo2"][0].asString());
+    }
+
+	return columna2;
+}
+
+void agregar (string pal1, string pal2)
+{
+    string url = "";
+    url = "curl \'http://localhost:8983/solr/mycol1/update?commit=true\' -H \'Content-type: application/json\' -d \'[{\"nodo1\":\"" + pal1 + "\", \"nodo2\":\"" + pal2 + "\"}]\'";
+    system(url.c_str());
+}
 
 /********************************
 * funciones de manejo de strings
@@ -39,8 +106,8 @@ string getString(string *s){
     for (pos=0; pos < s->size() && s->at(pos) == ' '; ++pos){};
     *s = s->substr(pos);
     if (s->empty())
-        return "";    
-    
+        return "";
+
     return *s;
 };
 
@@ -57,7 +124,7 @@ std::string fixedLength(int value, int digits = 3) {
 
 
 
-struct Packet { 
+struct Packet {
     string opcion = ""; //opcion del comando: send, login, logout
     string tamanio = "";
     string payload = "";
@@ -65,7 +132,7 @@ struct Packet {
     vector<string> datos;
     int profundidad;
     string mensaje;
-    
+
     Packet(){};
 
     string generar(){
@@ -75,7 +142,7 @@ struct Packet {
     string generarPaqueteQ(){
         return opcion + fixedLength(payload.size(), 4) + payload;
     }
-    
+
     string generarPaquete(){
     	string paquete = "";
 
@@ -86,7 +153,7 @@ struct Packet {
             paquete = opcion + fixedLength(getSize(),4) + getPayload();
         }
 	    else if ( opcion == "q" ){
-            string mensaje = std::to_string(profundidad) + " " + datos[0]; 
+            string mensaje = std::to_string(profundidad) + " " + datos[0];
             paquete = opcion + fixedLength(mensaje.size(),4) + mensaje;
         }
         else if ( opcion == "p" ){
@@ -110,7 +177,7 @@ struct Packet {
         }
         s += datos.size();
         return s;
-    } 
+    }
 
     string getPayload(){
         string s = "";
@@ -142,7 +209,7 @@ struct Packet {
     }
 
     string generarRQ(){
-        string msm = getPayload(); 
+        string msm = getPayload();
         return "r"+ fixedLength(msm.size(), 4) + msm;
     }
 
@@ -154,4 +221,4 @@ struct Packet {
     }
 };
 
-#endif 
+#endif
