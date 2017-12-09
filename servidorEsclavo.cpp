@@ -40,19 +40,48 @@ void cerrarCliente(int fd){
 
 
 void cliente(int fd){ //thread envio y recepcion de mensajes    
+    char opcionBuffer[2];   
     char clienteBuffer[2048];
     cout << "cliente aceptado" << endl;
+    Packet paquetador;
 
-    while(conectado){
-        int tam = recv(fd, clienteBuffer, 100, 0)  ;    
-        if ( tam <= 0 ){ 
-            cerrarCliente(fd);           
-            return;
+    if (conectado){       
+        paquetador.opcion = Servidor::recibirMensaje(1, fd);
+        cout << "opcion :   "<<paquetador.opcion <<endl;
+        
+        int tam = stoi( Servidor::recibirMensaje(4, fd) );
+        cout << tam <<endl;
+        if ( paquetador.opcion == "n" ){            
+            paquetador.datos.push_back(Servidor::recibirMensaje(tam, fd));
+            //cout<<paquetador.datos[0]<<endl;
         }
-        cout << "mensaje recibido: "<< clienteBuffer <<endl;
+        else if ( paquetador.opcion == "l" ){
+
+        }
+        else if ( paquetador.opcion == "q" ){
+            paquetador.payload = Servidor::recibirMensaje(tam, fd);
+
+            struct Packet p;
+            p.opcion = "r";
+            p.datos.push_back("perro");
+            p.datos.push_back("loro");
+            p.datos.push_back("canario");
+            Servidor::enviarMensaje(p.generarRQ(), fd);
+        }
+        else if ( paquetador.opcion == "p" ){
+
+        }
+        else if ( paquetador.opcion == "c" ){
+
+        }
+        else if ( paquetador.opcion == "s" ){
+
+        }        
+
 
         bzero(clienteBuffer,2048);
     }
+    cerrarCliente(fd);
 }
 
 

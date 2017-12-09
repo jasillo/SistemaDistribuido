@@ -26,6 +26,8 @@
 using namespace std;
 
 
+
+
 int main(int argc, char **argv) {   
     if ( argc < 2 ){
         cout<<"falta argumentos"<<endl;
@@ -33,56 +35,49 @@ int main(int argc, char **argv) {
     }
 
     struct Packet paquetador;
-    string opcion = argv[1];    
+    string opcion = argv[1];
+    
     Cliente cliente;
-    string cadena;
-
     if ( !cliente.conectar(0) ) // posicion 0 es la del servidor maestro
         return -1;
-
+    //cout <<argv[1]<<endl;
     if (opcion == "-N"){
-        paquetador.opcion = "n";
-        paquetador.nodos.push_back(argv[2]);        
-        cliente.enviarMensaje(paquetador.generarPaquete());        
+        
 
-        paquetador.leerCabezera(cliente.recivirMensaje(5)); //cabezera
-        paquetador.leerCuerpo(cliente.recivirMensaje(paquetador.tamanio));
     }
     else if (opcion == "-L"){
-        paquetador.opcion =  "l";
-        paquetador.nodos.push_back(argv[2]);
-        paquetador.nodos.push_back(argv[3]);
-        cliente.enviarMensaje(paquetador.generarPaquete());
+        
 
-        paquetador.leerCabezera(cliente.recivirMensaje(5)); //cabezera
-        paquetador.leerCuerpo(cliente.recivirMensaje(paquetador.tamanio));
     }
     else if (opcion == "-Q"){
         paquetador.opcion =  "q";
-        paquetador.nodos.push_back(argv[2]);
-        paquetador.profundidad = argv[3];
-        cliente.enviarMensaje(paquetador.generarPaquete());
+        paquetador.payload = string(argv[2]) + " " + string(argv[3]);
+        cout<<paquetador.generarPaqueteQ()<<endl;
+        cliente.enviarMensaje( paquetador.generarPaqueteQ() );
 
-        paquetador.leerCabezera(cliente.recivirMensaje(5)); //cabezera
-        paquetador.leerCuerpo(cliente.recivirMensaje(paquetador.tamanio));
+        paquetador.opcion = cliente.recibirMensaje(1);
+        paquetador.tamanio = cliente.recibirMensaje(4);
+        paquetador.payload = cliente.recibirMensaje(stoi(paquetador.tamanio));
+        cout<<"respuesta : "<<paquetador.payload<<endl;
     }
     else if (opcion == "-P"){
         paquetador.opcion =  "p";
         for (int i = 2; i < argc; ++i)
-            paquetador.push_back(argv[i]);
-        cliente.enviarMensaje(paquetador.generarPaquete());
+        {
+            paquetador.datos.push_back(argv[i]);
+        }
+        cout<<cliente.recibirMensaje(1)<<endl;
+        cout<<cliente.recibirMensaje(4)<<endl;
 
-        do{
-            paquetador.leerCabezera(cliente.recivirMensaje(5)); //cabezera
-            paquetador.leerCuerpo(cliente.recivirMensaje(paquetador.tamanio)); //imprime en pantalla
-        }while (paquetador.tamanio != 0)
+
     }
     else if (opcion == "-C"){
         paquetador.opcion =  "c|"; 
 
     }
     else if (opcion == "-S"){
-        
+        paquetador.opcion =  "s";
+
     }
 
    

@@ -34,13 +34,6 @@ static vector<string> listaDeIps = {   "127.0.0.1","127.0.0.1","127.0.0.1","127.
 static vector<int> listaDePuertos = {8000,8001,8002,8003,8004,8005,8006,8007,8008};
 
 
-// HAY QUE CAMBIARLO
-// algoritmo que determina en que servidor se encuentra la palabra
-int elejirServidor(string palabra)
-{
-    return 1;
-}
-
 class Cliente
 {
 private:
@@ -70,6 +63,8 @@ public:
         inet_pton(AF_INET, ipDestino.c_str(), &direc.sin_addr);
 
         if (connect(socketServidor,(struct sockaddr *)&direc, sizeof(direc)) < 0 ){
+            shutdown(socketServidor, SHUT_RDWR);
+            close(socketServidor);
             cout << "conexion al servidor fallo" << endl;
             return false;
         }
@@ -99,7 +94,10 @@ public:
     };
 
     string recibirMensaje(int tamanio){
-        char buffer[tamanio];
+        if (tamanio == 0)
+            return "";
+        char buffer[tamanio+1];
+        memset(buffer,0, tamanio +1);
         int tam = recv(socketServidor, buffer, tamanio, 0);
         if (tam < 1){
             cout << "error al recibir mensaje" << endl;

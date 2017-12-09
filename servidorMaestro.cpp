@@ -25,6 +25,7 @@ using namespace std;
 Servidor *servidor;
 bool conectado;
 mutex mtxScreen;
+vector<int> esclavosFDs;
 
 
 
@@ -44,22 +45,39 @@ void cliente(int fd){ //thread envio y recepcion de mensajes
     cout << "cliente aceptado" << endl;
     Packet paquetador;
 
-    while(conectado){       
-        if ( ( paquetador.opcion = Servidor::recibirMensaje(1, fd) ) == "")        	           
-            break;
-        //cout << paquetador.opcion <<endl;
-        int tam;
-        if ( paquetador.opcion == "n" ){
-        	tam = stoi( Servidor::recibirMensaje(3, fd) );
-        	//las palabras estan separadas por espacios
+    if (conectado){       
+        paquetador.opcion = Servidor::recibirMensaje(1, fd);
+        cout << "opcion : 	"<<paquetador.opcion <<endl;
+        
+        paquetador.tamanio = Servidor::recibirMensaje(4, fd);
+        int tam = stoi(paquetador.tamanio);
+
+        if ( paquetador.opcion == "n" ){        	
         	paquetador.datos.push_back(Servidor::recibirMensaje(tam, fd));
-                    	
+        	//cout<<paquetador.datos[0]<<endl;
         }
         else if ( paquetador.opcion == "l" ){
 
         }
 	    else if ( paquetador.opcion == "q" ){
+	    	paquetador.payload = Servidor::recibirMensaje(tam, fd);
+	    	paquetador.procesarQ();
 
+	    	int esclavoID = paquetador.hash(paquetador.datos[0]);
+	    	Cliente cliente;
+		    if ( !cliente.conectar(esclavoID + 1) ) // posicion 0 es la del servidor maestro
+		    {
+		    	Servidor::enviarMensaje(paquetador.paqueteVacio(), fd);
+		        return ;
+		    }
+		    cout<<paquetador.generar()<<endl;
+		    cliente.enviarMensaje(paquetador.generar());
+
+		    paquetador.opcion = cliente.recibirMensaje(1);
+		    paquetador.tamanio = cliente.recibirMensaje(4);
+		    paquetador.payload = cliente.recibirMensaje(stoi(paquetador.tamanio));
+
+		    Servidor::enviarMensaje(paquetador.generar(),fd);
         }
         else if ( paquetador.opcion == "p" ){
 
@@ -95,6 +113,10 @@ void aceptarClientes (){ //thread que recepciona a los clientes
 
 
 int main(int argc, char **argv) {    
+	for (int i = 0; i < 8; ++i)
+	{
+		esclavosFDs.push_back(-1);
+	}
     char buffer[50];
 
     // 0 es el maestro, ver listas en Coneccion.h
