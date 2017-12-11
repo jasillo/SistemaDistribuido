@@ -57,7 +57,24 @@ void cliente(int fd){ //thread envio y recepcion de mensajes
         	//cout<<paquetador.datos[0]<<endl;
         }
         else if ( paquetador.opcion == "l" ){
-
+            paquetador.payload = Servidor::recibirMensaje(tam, fd);
+            cout<<"pay:"<<paquetador.payload<<endl;
+            paquetador.getListaPalabras();
+            int esclavoID = paquetador.hash(paquetador.datos[0]);
+            
+            Cliente *cliente = new Cliente();
+            if ( !cliente->conectar(esclavoID) ) // posicion 0 es la del servidor maestro
+            {
+                Servidor::enviarMensaje("r0005false", fd);
+                return ;
+            }
+            cout<<"paquete:"<<paquetador.generar()<<endl;
+            cliente->enviarMensaje(paquetador.generar());
+            paquetador.opcion = cliente->recibirMensaje(1);
+            paquetador.tamanio = cliente->recibirMensaje(4);
+            paquetador.payload = cliente->recibirMensaje(stoi(paquetador.tamanio));
+            Servidor::enviarMensaje(paquetador.generar(), fd);
+            delete cliente;
         }
 	    else if ( paquetador.opcion == "q" ){
 	    	paquetador.payload = Servidor::recibirMensaje(tam, fd);
@@ -65,19 +82,22 @@ void cliente(int fd){ //thread envio y recepcion de mensajes
 
 	    	int esclavoID = paquetador.hash(paquetador.datos[0]);
 	    	Cliente cliente;
-		    if ( !cliente.conectar(esclavoID + 1) ) // posicion 0 es la del servidor maestro
+		    if ( !cliente.conectar(esclavoID) ) // posicion 0 es la del servidor maestro
 		    {
 		    	Servidor::enviarMensaje(paquetador.paqueteVacio(), fd);
 		        return ;
 		    }
-		    cout<<paquetador.generar()<<endl;
 		    cliente.enviarMensaje(paquetador.generar());
 
-		    paquetador.opcion = cliente.recibirMensaje(1);
-		    paquetador.tamanio = cliente.recibirMensaje(4);
-		    paquetador.payload = cliente.recibirMensaje(stoi(paquetador.tamanio));
-
-		    Servidor::enviarMensaje(paquetador.generar(),fd);
+            do {
+                paquetador.opcion = cliente.recibirMensaje(1);
+                paquetador.tamanio = cliente.recibirMensaje(4);
+                paquetador.payload = cliente.recibirMensaje(stoi(paquetador.tamanio));
+                if (paquetador.tamanio != "0000"){
+                    Servidor::enviarMensaje(paquetador.generar(),fd);
+                }
+            } while (stoi(paquetador.tamanio) != 0) ;       
+		    Servidor::enviarMensaje("r0000", fd);
         }
         else if ( paquetador.opcion == "p" ){
 

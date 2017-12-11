@@ -56,21 +56,61 @@ void cliente(int fd){ //thread envio y recepcion de mensajes
             //cout<<paquetador.datos[0]<<endl;
         }
         else if ( paquetador.opcion == "l" ){
-
+            paquetador.payload = Servidor::recibirMensaje(tam, fd);
+            cout<<"pay:"<<paquetador.payload<<endl;
+            paquetador.getListaPalabras();
+            
+            agregar(paquetador.datos[0],paquetador.datos[1]);
+            
+            Servidor::enviarMensaje("r0004true", fd);
         }
         else if ( paquetador.opcion == "q" ){
             paquetador.payload = Servidor::recibirMensaje(tam, fd);
-
             paquetador.procesarQ();
-            struct Packet p;
-            p.opcion = "r";
-            // p.datos.push_back("perro");
-            // p.datos.push_back("loro");
-            // p.datos.push_back("canario");
-            cout<<"palabraaa"<<paquetador.datos[0].erase(0,2) <<endl;
 
-            p.datos = buscar(paquetador.datos[0]);
-            Servidor::enviarMensaje(p.generarRQ(), fd);
+            struct Packet p;
+            if (paquetador.profundidad <= 1){
+                p.opcion = "r";
+                buscar(paquetador.datos[0],&p.datos);
+                int inicio = 0;
+                while (inicio < p.datos.size()){
+                    Servidor::enviarMensaje(p.generarRQ(inicio,inicio+100), fd);                
+                    inicio += 100;
+                }
+                Servidor::enviarMensaje("r0000", fd);
+            }
+            else{
+                p.opcion = "r";
+                buscar(paquetador.datos[0],&p.datos);
+                Cliente *cliente;
+                for (int i = 0; i < p.datos.size(); ++i)
+                {
+                    cliente =  new Cliente();
+                    struct Packet q;
+                    q.opcion = "q";
+                    q.payload = std::to_string(paquetador.profundidad - 1) + " "+ p.datos[i];
+                    int esclavoID = paquetador.hash(p.datos[i]);
+                    if ( cliente->conectar(esclavoID) ) // posicion 0 es la del servidor maestro
+                    {
+                        cliente->enviarMensaje(q.generarPaqueteQ());    
+
+                        do {
+                            paquetador.opcion = cliente->recibirMensaje(1);
+                            paquetador.tamanio = cliente->recibirMensaje(4);
+                            paquetador.payload = cliente->recibirMensaje(stoi(paquetador.tamanio));
+                            if (paquetador.tamanio != "0000"){
+                                Servidor::enviarMensaje(paquetador.generar(),fd);
+                            }
+                        } while (stoi(paquetador.tamanio) != 0) ;       
+                    }
+                    
+                    delete cliente;                 
+                }
+                Servidor::enviarMensaje("r0000", fd);
+            }
+                        
+
+            
         }
         else if ( paquetador.opcion == "p" ){
 

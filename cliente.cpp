@@ -46,11 +46,7 @@ int main(int argc, char **argv) {
 
     }
     else if (opcion == "-L"){
-        
-
-    }
-    else if (opcion == "-Q"){
-        paquetador.opcion =  "q";
+        paquetador.opcion =  "l";
         paquetador.payload = string(argv[2]) + " " + string(argv[3]);
         cout<<paquetador.generarPaqueteQ()<<endl;
         cliente.enviarMensaje( paquetador.generarPaqueteQ() );
@@ -58,7 +54,26 @@ int main(int argc, char **argv) {
         paquetador.opcion = cliente.recibirMensaje(1);
         paquetador.tamanio = cliente.recibirMensaje(4);
         paquetador.payload = cliente.recibirMensaje(stoi(paquetador.tamanio));
-        cout<<"respuesta : "<<paquetador.payload<<endl;
+        cout<<"respuesta: "<<paquetador.payload<<endl;
+    }
+    else if (opcion == "-Q"){
+        paquetador.opcion =  "q";
+        paquetador.payload = string(argv[2]) + " " + string(argv[3]);
+        cout<<paquetador.generarPaqueteQ()<<endl;
+        cliente.enviarMensaje( paquetador.generarPaqueteQ() );
+
+        do {
+            paquetador.opcion = cliente.recibirMensaje(1);
+            paquetador.tamanio = cliente.recibirMensaje(4);
+            paquetador.payload = cliente.recibirMensaje(stoi(paquetador.tamanio));
+            paquetador.datos.clear();
+            paquetador.getListaPalabras();
+            for (int i = 0; i < paquetador.datos.size(); ++i)
+            {
+                cout<<paquetador.datos[i]<<endl;
+            }
+        } while (stoi(paquetador.tamanio) != 0) ;        
+        
     }
     else if (opcion == "-P"){
         paquetador.opcion =  "p";

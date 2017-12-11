@@ -25,8 +25,9 @@ size_t writeCallback(char* buf, size_t size, size_t nmemb, void* up)
     return realsize;
 }
 
-vector<string> buscar (string palabra)
+void buscar (string palabra, std::vector<string> *v)
 {
+    data = "";
     CURL* curl; //our curl object
 
     curl_global_init(CURL_GLOBAL_ALL); //pretty obvious
@@ -35,7 +36,8 @@ vector<string> buscar (string palabra)
 //nodo 1 se pasa por parametro y lo sumo al string http.....
 
     string url = "";
-    url = "http://localhost:8983/solr/mycol1/select?fl=nodo2&indent=on&q=nodo1:"+palabra+"&wt=json&rows=1000";
+    //url = "http://localhost:8983/solr/mycol1/select?fl=nodo2&indent=on&q=nodo1:"+palabra+"&wt=json&rows=1000";
+    url = "http://192.150.0.104:8983/solr/mycol1/select?fl=nodo2&indent=on&q=nodo1:"+palabra+"&wt=json&rows=1000";
 
 //    curl_easy_setopt(curl, CURLOPT_URL, "http://localhost:8983/solr/mycol1/select?fl=nodo2&indent=on&q=nodo1:barbell&wt=json&rows=1000");
 
@@ -58,26 +60,27 @@ vector<string> buscar (string palabra)
     reader.parse(data, obj);     // Reader can also read strings
     const Json::Value& objeto = obj["response"];
     int tam = objeto["numFound"].asUInt();
-    cout <<"numero coincidencias : "<< tam << endl;
-    cout <<"valores : "<<endl;
+    //cout <<"numero coincidencias : "<< tam << endl;
+    //cout <<"valores : "<<endl;
     const Json::Value& valores = objeto["docs"];
 
-    vector<string> columna2;
+    //vector<string> columna2;
 
 
 //creo vector de string igualando a valores
     for (int i=0; i<tam; ++i){
         //cout<<valores[i]["nodo2"][0].asString()<<endl;
-	columna2.push_back(valores[i]["nodo2"][0].asString());
+	   v->push_back(valores[i]["nodo2"][0].asString());
     }
 
-	return columna2;
+	//return columna2;
 }
-
+//192.150.0.104
 void agregar (string pal1, string pal2)
 {
     string url = "";
-    url = "curl \'http://localhost:8983/solr/mycol1/update?commit=true\' -H \'Content-type: application/json\' -d \'[{\"nodo1\":\"" + pal1 + "\", \"nodo2\":\"" + pal2 + "\"}]\'";
+    //url = "curl \'http://localhost:8983/solr/mycol1/update?commit=true\' -H \'Content-type: application/json\' -d \'[{\"nodo1\":\"" + pal1 + "\", \"nodo2\":\"" + pal2 + "\"}]\'";
+    url = "curl \'http://192.150.0.104:8983/solr/mycol1/update?commit=true\' -H \'Content-type: application/json\' -d \'[{\"nodo1\":\"" + pal1 + "\", \"nodo2\":\"" + pal2 + "\"}]\'";
     system(url.c_str());
 }
 
@@ -189,14 +192,15 @@ struct Packet {
     }
 
     int hash(string word){
-        int h = 0;
+        /*int h = 0;
         for (int i = 0; i < word.size(); ++i)
         {
             h += int(word[i]);
         }
-        h = h % 8;
-        cout<<"hash: "<<h<<endl;
-        return h;
+        h = h % 8+1;
+        //cout<<"hash: "<<h<<endl;
+        return h;*/
+        return 1;
     }
 
     void leerPayloadQ(string pay){
@@ -208,16 +212,29 @@ struct Packet {
         return "r0000";
     }
 
-    string generarRQ(){
-        string msm = getPayload();
-        return "r"+ fixedLength(msm.size(), 4) + msm;
+    string generarRQ(int inicio, int fin){
+        string sms = "";
+        for (int i = inicio; i < datos.size() && i < fin; ++i)
+        {
+            sms += datos[i] + " ";
+        }
+        return "r"+ fixedLength(sms.size(), 4) + sms;
     }
 
     void procesarQ(){
         datos.clear();
         string pl = payload;
-        profundidad = stoi(getString(&pl));
-        datos.push_back(getString(&pl));
+        profundidad = stoi(getWord(&pl));
+        datos.push_back(getWord(&pl));
+    }
+
+    void getListaPalabras(){
+        string temp = payload;
+        string s = getWord(&temp);
+        while(s != ""){
+            datos.push_back(s);
+            s = getWord(&temp);
+        }    
     }
 };
 

@@ -169,6 +169,8 @@ public:
     }
 
     static string recibirMensaje(int tamanio, int fdCliente){
+        if (tamanio == 0)
+            return "";
         char buffer[tamanio +1];
         bzero(buffer,tamanio+1);
         int tam = recv(fdCliente, buffer, tamanio, 0) ;        
