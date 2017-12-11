@@ -47,17 +47,17 @@ void cliente(int fd){ //thread envio y recepcion de mensajes
 
     if (conectado){
         paquetador.opcion = Servidor::recibirMensaje(1, fd);
-        cout << "opcion :   "<<paquetador.opcion <<endl;
+        //cout << "opcion :   "<<paquetador.opcion <<endl;
 
         int tam = stoi( Servidor::recibirMensaje(4, fd) );
-        cout << tam <<endl;
+        //cout << tam <<endl;
         if ( paquetador.opcion == "n" ){
-            paquetador.datos.push_back(Servidor::recibirMensaje(tam, fd));
+            //paquetador.datos.push_back(Servidor::recibirMensaje(tam, fd));
             //cout<<paquetador.datos[0]<<endl;
         }
         else if ( paquetador.opcion == "l" ){
             paquetador.payload = Servidor::recibirMensaje(tam, fd);
-            cout<<"pay:"<<paquetador.payload<<endl;
+            //cout<<"pay:"<<paquetador.payload<<endl;
             paquetador.getListaPalabras();
             
             agregar(paquetador.datos[0],paquetador.datos[1]);
@@ -74,10 +74,12 @@ void cliente(int fd){ //thread envio y recepcion de mensajes
                 buscar(paquetador.datos[0],&p.datos);
                 int inicio = 0;
                 while (inicio < p.datos.size()){
-                    Servidor::enviarMensaje(p.generarRQ(inicio,inicio+100), fd);                
+                    if (!Servidor::enviarMensaje(p.generarRQ(inicio,inicio+100), fd))
+                        return;
                     inicio += 100;
                 }
-                Servidor::enviarMensaje("r0000", fd);
+                if (!Servidor::enviarMensaje("r0000", fd))
+                    return;
             }
             else{
                 p.opcion = "r";
@@ -89,21 +91,31 @@ void cliente(int fd){ //thread envio y recepcion de mensajes
                     struct Packet q;
                     q.opcion = "q";
                     q.payload = std::to_string(paquetador.profundidad - 1) + " "+ p.datos[i];
-                    int esclavoID = paquetador.hash(p.datos[i]);
-                    if ( cliente->conectar(esclavoID) ) // posicion 0 es la del servidor maestro
-                    {
-                        cliente->enviarMensaje(q.generarPaqueteQ());    
 
-                        do {
-                            paquetador.opcion = cliente->recibirMensaje(1);
-                            paquetador.tamanio = cliente->recibirMensaje(4);
-                            paquetador.payload = cliente->recibirMensaje(stoi(paquetador.tamanio));
-                            if (paquetador.tamanio != "0000"){
-                                Servidor::enviarMensaje(paquetador.generar(),fd);
-                            }
-                        } while (stoi(paquetador.tamanio) != 0) ;       
+                    int esclavoID = paquetador.hash(p.datos[i]);
+                    int esclavoID2 = (esclavoID+1)%(NumeroEsclavos+1);
+                    if (esclavoID2 == 0)
+                        esclavoID2 =1;
+
+                    if ( !cliente->conectar(esclavoID) ) // posicion 0 es la del servidor maestro
+                    {
+                        if (!cliente->conectar(esclavoID2)){
+                            Servidor::enviarMensaje("r0000", fd);
+                            return;
+                        }
                     }
                     
+                    cliente->enviarMensaje(q.generarPaqueteQ());    
+
+                    do {
+                        paquetador.opcion = cliente->recibirMensaje(1);
+                        paquetador.tamanio = cliente->recibirMensaje(4);
+                        paquetador.payload = cliente->recibirMensaje(stoi(paquetador.tamanio));
+                        if (paquetador.tamanio != "0000"){
+                            Servidor::enviarMensaje(paquetador.generar(),fd);
+                        }
+                    } while (stoi(paquetador.tamanio) != 0) ;       
+
                     delete cliente;                 
                 }
                 Servidor::enviarMensaje("r0000", fd);
@@ -154,7 +166,7 @@ int main(int argc, char **argv) {
         return -1;
     }
     int esclavoNumero = atoi(argv[1]);
-    if (esclavoNumero < 0 || esclavoNumero >= 8){
+    if (esclavoNumero < 1 || esclavoNumero > NumeroEsclavos){
         cout << "esclavo fuera de rango" << endl;
         return -1;
     }

@@ -33,7 +33,7 @@ bool existe(string palabra){
     curl = curl_easy_init();
 
     string url = "";
-    url = "http://192.150.0.104:8983/solr/mycol1/select?fl=nodo2&indent=on&q=nodo1:"+palabra+"&wt=json&rows=1000";
+    url = "http://192.150.0.104:8983/solr/data/select?fl=nodo2&indent=on&q=nodo1:"+palabra+"&wt=json&rows=1000";
 
     curl_easy_setopt(curl, CURLOPT_URL, url.c_str());
     curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, &writeCallback);
@@ -64,10 +64,10 @@ void buscar (string palabra, std::vector<string> *v)
 //nodo 1 se pasa por parametro y lo sumo al string http.....
 
     string url = "";
-    //url = "http://localhost:8983/solr/mycol1/select?fl=nodo2&indent=on&q=nodo1:"+palabra+"&wt=json&rows=1000";
-    url = "http://192.150.0.104:8983/solr/mycol1/select?fl=nodo2&indent=on&q=nodo1:"+palabra+"&wt=json&rows=1000";
+    //url = "http://localhost:8983/solr/data/select?fl=nodo2&indent=on&q=nodo1:"+palabra+"&wt=json&rows=1000";
+    url = "http://192.150.0.104:8983/solr/data/select?fl=nodo2&indent=on&q=nodo1:"+palabra+"&wt=json&rows=1000";
 
-//    curl_easy_setopt(curl, CURLOPT_URL, "http://localhost:8983/solr/mycol1/select?fl=nodo2&indent=on&q=nodo1:barbell&wt=json&rows=1000");
+//    curl_easy_setopt(curl, CURLOPT_URL, "http://localhost:8983/solr/data/select?fl=nodo2&indent=on&q=nodo1:barbell&wt=json&rows=1000");
 
     curl_easy_setopt(curl, CURLOPT_URL, url.c_str());
     curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, &writeCallback);
@@ -104,11 +104,62 @@ void buscar (string palabra, std::vector<string> *v)
 	//return columna2;
 }
 //192.150.0.104
+
+void buscar_sinomimos(string palabra, std::vector<string> *v)
+{
+    data = "";
+    CURL* curl; //our curl object
+
+    curl_global_init(CURL_GLOBAL_ALL); //pretty obvious
+    curl = curl_easy_init();
+
+//nodo 1 se pasa por parametro y lo sumo al string http.....
+
+    string url = "";
+    //url = "http://localhost:8983/solr/data/select?fl=nodo2&indent=on&q=nodo1:"+palabra+"&wt=json&rows=1000";
+    url = "http://192.150.0.104:8983/solr/sinonimos/select?fl=nodo2&indent=on&q=nodo1:"+palabra+"&wt=json&rows=1000";
+
+//    curl_easy_setopt(curl, CURLOPT_URL, "http://localhost:8983/solr/data/select?fl=nodo2&indent=on&q=nodo1:barbell&wt=json&rows=1000");
+
+    curl_easy_setopt(curl, CURLOPT_URL, url.c_str());
+    curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, &writeCallback);
+    //curl_easy_setopt(curl, CURLOPT_VERBOSE, 1L); //tell curl to output its progress
+
+    curl_easy_perform(curl);
+
+    //cout << endl << data << endl;
+
+    curl_easy_cleanup(curl);
+    curl_global_cleanup();
+
+    /*____________________________________*/
+
+
+    Json::Reader reader;
+    Json::Value obj;
+    reader.parse(data, obj);     // Reader can also read strings
+    const Json::Value& objeto = obj["response"];
+    int tam = objeto["numFound"].asUInt();
+    //cout <<"numero coincidencias : "<< tam << endl;
+    //cout <<"valores : "<<endl;
+    const Json::Value& valores = objeto["docs"];
+
+    //vector<string> columna2;
+
+
+//creo vector de string igualando a valores
+    for (int i=0; i<tam; ++i){
+        //cout<<valores[i]["nodo2"][0].asString()<<endl;
+       v->push_back(valores[i]["nodo2"][0].asString());
+    }
+
+    //return columna2;
+}
 void agregar (string pal1, string pal2)
 {
     string url = "";
-    //url = "curl \'http://localhost:8983/solr/mycol1/update?commit=true\' -H \'Content-type: application/json\' -d \'[{\"nodo1\":\"" + pal1 + "\", \"nodo2\":\"" + pal2 + "\"}]\'";
-    url = "curl \'http://192.150.0.104:8983/solr/mycol1/update?commit=true\' -H \'Content-type: application/json\' -d \'[{\"nodo1\":\"" + pal1 + "\", \"nodo2\":\"" + pal2 + "\"}]\'";
+    //url = "curl \'http://localhost:8983/solr/data/update?commit=true\' -H \'Content-type: application/json\' -d \'[{\"nodo1\":\"" + pal1 + "\", \"nodo2\":\"" + pal2 + "\"}]\'";
+    url = "curl \'http://192.150.0.104:8983/solr/data/update?commit=true\' -H \'Content-type: application/json\' -d \'[{\"nodo1\":\"" + pal1 + "\", \"nodo2\":\"" + pal2 + "\"}]\'";
     system(url.c_str());
 }
 

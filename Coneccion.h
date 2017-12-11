@@ -33,6 +33,7 @@ static vector<string> listaDeIps = {   "127.0.0.1","127.0.0.1","127.0.0.1","127.
                                 "127.0.0.1","127.0.0.1","127.0.0.1","127.0.0.1" };
 static vector<int> listaDePuertos = {8000,8001,8002,8003,8004,8005,8006,8007,8008};
 
+static int NumeroEsclavos = 8;
 
 class Cliente
 {

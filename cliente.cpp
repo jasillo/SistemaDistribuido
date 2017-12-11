@@ -49,10 +49,17 @@ int main(int argc, char **argv) {
         paquetador.opcion =  "l";
         paquetador.payload = string(argv[2]) + " " + string(argv[3]);
         cout<<paquetador.generarPaqueteQ()<<endl;
-        cliente.enviarMensaje( paquetador.generarPaqueteQ() );
+        if (!cliente.enviarMensaje(paquetador.generarPaqueteQ())){
+            cout<<"error en el maestro"<<endl;
+            return;
+        }
 
         paquetador.opcion = cliente.recibirMensaje(1);
         paquetador.tamanio = cliente.recibirMensaje(4);
+        if (paquetador.tamanio == "") {
+            cout<<"error en el maestro"<<endl;
+            return;
+        }
         paquetador.payload = cliente.recibirMensaje(stoi(paquetador.tamanio));
         cout<<"respuesta: "<<paquetador.payload<<endl;
     }
@@ -60,11 +67,18 @@ int main(int argc, char **argv) {
         paquetador.opcion =  "q";
         paquetador.payload = string(argv[2]) + " " + string(argv[3]);
         cout<<paquetador.generarPaqueteQ()<<endl;
-        cliente.enviarMensaje( paquetador.generarPaqueteQ() );
+        if (!cliente.enviarMensaje(paquetador.generarPaqueteQ())){
+            cout<<"error en el maestro"<<endl;
+            return;
+        }
 
         do {
             paquetador.opcion = cliente.recibirMensaje(1);
             paquetador.tamanio = cliente.recibirMensaje(4);
+            if (paquetador.tamanio == "") {
+                cout<<"error en el maestro"<<endl;
+                return;
+            }
             paquetador.payload = cliente.recibirMensaje(stoi(paquetador.tamanio));
             paquetador.datos.clear();
             paquetador.getListaPalabras();
@@ -77,22 +91,28 @@ int main(int argc, char **argv) {
     }
     else if (opcion == "-P"){
         paquetador.opcion =  "p";
+        paquetador.payload = "";
         for (int i = 2; i < argc; ++i)
         {
-            paquetador.datos.push_back(argv[i]);
+            paquetador.payload += string(argv[i]) + " ";
         }
-        cout<<cliente.recibirMensaje(1)<<endl;
-        cout<<cliente.recibirMensaje(4)<<endl;
-
+        cliente.enviarMensaje(paquetador.generarPaqueteQ());       
 
     }
     else if (opcion == "-C"){
         paquetador.opcion =  "c";
         paquetador.payload =  string(argv[2]);
-        cliente.enviarMensaje( paquetador.generarPaqueteQ() );
+        if (cliente.enviarMensaje( paquetador.generarPaqueteQ() )){
+            cout<<"error en el maestro"<<endl;
+            return;
+        }
 
         paquetador.opcion = cliente.recibirMensaje(1);
         paquetador.tamanio =  cliente.recibirMensaje(4);
+        if (paquetador.tamanio == "") {
+            cout<<"error en el maestro"<<endl;
+            return;
+        }
         paquetador.payload = cliente.recibirMensaje(stoi(paquetador.tamanio));
         int concu = stoi(getWord(&paquetador.payload));
         cout<<"concurrencia: "<< concu<<endl;
@@ -103,9 +123,17 @@ int main(int argc, char **argv) {
         
     }
     else if (opcion == "-S"){
-        cliente.enviarMensaje( "s0000" );
+        if(cliente.enviarMensaje( "s0000" )){
+            cout<<"error en el maestro"<<endl;
+            return;
+        }
+
         paquetador.opcion = cliente.recibirMensaje(1);
         paquetador.tamanio =  cliente.recibirMensaje(4);
+        if (paquetador.tamanio == "") {
+            cout<<"error en el maestro"<<endl;
+            return;
+        }
         paquetador.payload = cliente.recibirMensaje(stoi(paquetador.tamanio));
         for (int i = 0; i < 8; ++i)
         {
