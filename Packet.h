@@ -25,6 +25,34 @@ size_t writeCallback(char* buf, size_t size, size_t nmemb, void* up)
     return realsize;
 }
 
+bool existe(string palabra){
+    data = "";
+    CURL* curl; //our curl object
+
+    curl_global_init(CURL_GLOBAL_ALL); //pretty obvious
+    curl = curl_easy_init();
+
+    string url = "";
+    url = "http://192.150.0.104:8983/solr/mycol1/select?fl=nodo2&indent=on&q=nodo1:"+palabra+"&wt=json&rows=1000";
+
+    curl_easy_setopt(curl, CURLOPT_URL, url.c_str());
+    curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, &writeCallback);
+
+    curl_easy_perform(curl);
+
+    curl_easy_cleanup(curl);
+    curl_global_cleanup();
+
+    Json::Reader reader;
+    Json::Value obj;
+    reader.parse(data, obj);     // Reader can also read strings
+    const Json::Value& objeto = obj["response"];
+    int tam = objeto["numFound"].asUInt();   
+    if (tam > 0)
+        return true;
+    return false;
+}
+
 void buscar (string palabra, std::vector<string> *v)
 {
     data = "";

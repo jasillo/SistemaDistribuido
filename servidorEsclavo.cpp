@@ -116,7 +116,11 @@ void cliente(int fd){ //thread envio y recepcion de mensajes
 
         }
         else if ( paquetador.opcion == "c" ){
-
+            paquetador.payload = Servidor::recibirMensaje(tam, fd);
+            if (existe(paquetador.payload))
+                Servidor::enviarMensaje("r0001t",fd);
+            else
+                Servidor::enviarMensaje("r0001f",fd);
         }
         else if ( paquetador.opcion == "s" ){
 

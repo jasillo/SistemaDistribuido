@@ -58,7 +58,7 @@ void cliente(int fd){ //thread envio y recepcion de mensajes
         }
         else if ( paquetador.opcion == "l" ){
             paquetador.payload = Servidor::recibirMensaje(tam, fd);
-            cout<<"pay:"<<paquetador.payload<<endl;
+            //cout<<"pay:"<<paquetador.payload<<endl;
             paquetador.getListaPalabras();
             int esclavoID = paquetador.hash(paquetador.datos[0]);
             
@@ -68,7 +68,7 @@ void cliente(int fd){ //thread envio y recepcion de mensajes
                 Servidor::enviarMensaje("r0005false", fd);
                 return ;
             }
-            cout<<"paquete:"<<paquetador.generar()<<endl;
+            //cout<<"paquete:"<<paquetador.generar()<<endl;
             cliente->enviarMensaje(paquetador.generar());
             paquetador.opcion = cliente->recibirMensaje(1);
             paquetador.tamanio = cliente->recibirMensaje(4);
@@ -102,8 +102,40 @@ void cliente(int fd){ //thread envio y recepcion de mensajes
         else if ( paquetador.opcion == "p" ){
 
         }
-        else if ( paquetador.opcion == "c" ){
+        else if ( paquetador.opcion == "c" ){            
+            paquetador.payload = Servidor::recibirMensaje(tam, fd);
+            //cout<<"pay:"<<paquetador.payload<<endl;
+            int redundancia = 3;
+            int esclavoID = paquetador.hash(paquetador.payload);
+            string paq = paquetador.generar();
+            paquetador.payload = "";
+            for (int i = 0; i < 3; ++i)
+            {
+                Cliente *cliente = new Cliente();
+                if (esclavoID == 0) 
+                    esclavoID ++;
+                
+                if ( !cliente->conectar(esclavoID) )// posicion 0 es la del servidor maestro
+                    redundancia--;
+                else{
+                    cliente->enviarMensaje(paq);
+                    cliente->recibirMensaje(5);
+                    string b = cliente->recibirMensaje(1);
 
+                    if (b == "f"){
+                        redundancia--;
+                    }
+                    else{
+                        paquetador.payload += cliente->ipDestino + "-"+std::to_string(cliente->puertoDestino)+" ";    
+                    }                    
+                }
+                
+                delete cliente;
+                esclavoID = (esclavoID + 1) % 9;
+            }
+            paquetador.opcion = "r";
+            paquetador.payload = std::to_string(redundancia) +" "+ paquetador.payload; 
+            Servidor::enviarMensaje(paquetador.generarPaqueteQ(), fd);
         }
         else if ( paquetador.opcion == "s" ){
 

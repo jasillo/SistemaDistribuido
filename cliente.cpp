@@ -87,8 +87,20 @@ int main(int argc, char **argv) {
 
     }
     else if (opcion == "-C"){
-        paquetador.opcion =  "c|"; 
-
+        paquetador.opcion =  "c";
+        paquetador.payload =  string(argv[2]);
+        cliente.enviarMensaje( paquetador.generarPaqueteQ() );
+        
+        paquetador.opcion = cliente.recibirMensaje(1);
+        paquetador.tamanio =  cliente.recibirMensaje(4);
+        paquetador.payload = cliente.recibirMensaje(stoi(paquetador.tamanio));
+        int concu = stoi(getWord(&paquetador.payload));
+        cout<<"concurrencia: "<< concu<<endl;
+        for (int i = 0; i < concu; ++i)
+        {
+            cout<<getWord(&paquetador.payload)<<endl;
+        }
+        
     }
     else if (opcion == "-S"){
         paquetador.opcion =  "s";
