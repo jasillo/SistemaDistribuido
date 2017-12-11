@@ -138,7 +138,23 @@ void cliente(int fd){ //thread envio y recepcion de mensajes
             Servidor::enviarMensaje(paquetador.generarPaqueteQ(), fd);
         }
         else if ( paquetador.opcion == "s" ){
-
+            for (int i = 1; i < 9; ++i)
+            {
+                Cliente *cliente = new Cliente();
+                
+                if ( cliente->conectar(i) )// posicion 0 es la del servidor maestro
+                {
+                    paquetador.payload += cliente->ipDestino + "-"+std::to_string(cliente->puertoDestino)+"_"+"ACTIVO"+" ";
+                    cliente->enviarMensaje("c0000");
+                }
+                else{
+                    paquetador.payload += listaDeIps[i]+"_"+std::to_string(listaDePuertos[i])+"_"+"INACTIVO"+" ";
+                }
+                
+                delete cliente;
+            }
+            paquetador.opcion = "r";
+            Servidor::enviarMensaje(paquetador.generarPaqueteQ(),fd);
         }        
 
 
